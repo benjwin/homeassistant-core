@@ -100,6 +100,7 @@ RTUOVERTCP = "rtuovertcp"
 SERIAL = "serial"
 TCP = "tcp"
 UDP = "udp"
+TLS = "tls"
 
 
 # service call attributes

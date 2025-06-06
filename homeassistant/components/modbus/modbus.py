@@ -12,6 +12,7 @@ from pymodbus.client import (
     AsyncModbusSerialClient,
     AsyncModbusTcpClient,
     AsyncModbusUdpClient,
+    AsyncModbusTlsClient,
 )
 from pymodbus.exceptions import ModbusException
 from pymodbus.framer import FramerType
@@ -67,6 +68,7 @@ from .const import (
     SIGNAL_STOP_ENTITY,
     TCP,
     UDP,
+    TLS
 )
 from .validators import check_config
 
@@ -252,7 +254,7 @@ class ModbusHub:
 
         # generic configuration
         self._client: (
-            AsyncModbusSerialClient | AsyncModbusTcpClient | AsyncModbusUdpClient | None
+            AsyncModbusSerialClient | AsyncModbusTcpClient | AsyncModbusUdpClient | AsyncModbusTlsClient | None
         ) = None
         self._async_cancel_listener: Callable[[], None] | None = None
         self._in_error = False
@@ -267,6 +269,7 @@ class ModbusHub:
             TCP: AsyncModbusTcpClient,
             UDP: AsyncModbusUdpClient,
             RTUOVERTCP: AsyncModbusTcpClient,
+            TLS: AsyncModbusTlsClient
         }
         self._pb_params = {
             "port": client_config[CONF_PORT],
@@ -292,8 +295,17 @@ class ModbusHub:
             self._pb_params["host"] = client_config[CONF_HOST]
             if self._config_type == RTUOVERTCP:
                 self._pb_params["framer"] = FramerType.RTU
+            elif self._config_type == TLS:
+                self._pb_params["framer"] = FramerType.TLS # https://pymodbus.readthedocs.io/en/v3.6.9/source/examples.html#simple-asynchronous-client
+                self._pb_params.update(
+                {
+                    "certfile": client_config[CONF_CERTFILE], #TODO: do not use a certfile but use cert directly from config
+                    ""
+                }
+            )
             else:
                 self._pb_params["framer"] = FramerType.SOCKET
+
 
         if CONF_MSG_WAIT in client_config:
             self._msg_wait = client_config[CONF_MSG_WAIT] / 1000
